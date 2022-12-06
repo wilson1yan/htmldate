@@ -113,7 +113,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "backports-datetime-fromisoformat; python_version < '3.7'",
-        "charset_normalizer >= 3.0.1",
+        "charset_normalizer",
         "dateparser >= 1.1.2",  # 1.1.3 slower
         "lxml >= 4.9.1",
         "python-dateutil >= 2.8.2",
