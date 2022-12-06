@@ -14,6 +14,7 @@ import re
 from typing import Any, List, Optional, Set, Union
 
 import urllib3
+import requests
 
 
 # CChardet is faster and can be more accurate
@@ -34,13 +35,14 @@ UNICODE_ALIASES: Set[str] = {"utf-8", "utf_8"}
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 RETRY_STRATEGY = urllib3.util.Retry(
-    total=3,
+    total=0,
     connect=0,
     status_forcelist=[429, 500, 502, 503, 504],
 )
+USER_AGENT = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36'}
 HTTP_POOL = urllib3.PoolManager(
         retries=RETRY_STRATEGY,
-        headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36'}
+        headers=USER_AGENT
 )
 
 HTML_PARSER = HTMLParser(
@@ -105,10 +107,10 @@ def decode_response(response: Any) -> str:
     """Read the urllib3 object corresponding to the server response, then
     try to guess its encoding and decode it to return a unicode string"""
     # urllib3 response object / bytes switch
-    if isinstance(response, urllib3.response.HTTPResponse) or hasattr(response, "data"):
-        resp_content = response.data
-    else:
-        resp_content = response
+    #if isinstance(response, urllib3.response.HTTPResponse) or hasattr(response, "data"):
+    #    resp_content = response.data
+    #else:
+    resp_content = response
     return decode_file(resp_content)
 
 
@@ -127,21 +129,22 @@ def fetch_url(url: str) -> Optional[str]:
     try:
         # read by streaming chunks (stream=True, iter_content=xx)
         # so we can stop downloading as soon as MAX_FILE_SIZE is reached
-        response = HTTP_POOL.request("GET", url, timeout=30)  # type: ignore
+#        response = HTTP_POOL.request("GET", url, timeout=2)  # type: ignore
+        response = requests.get(url, headers=USER_AGENT, timeout=2)
     except Exception as err:
         LOGGER.error("download error: %s %s", url, err)  # sys.exc_info()[0]
     else:
         # safety checks
-        if response.status != 200:
-            LOGGER.error("not a 200 response: %s for URL %s", response.status, url)
+        if response.status_code != 200:
+            LOGGER.error("not a 200 response: %s for URL %s", response.status_code, url)
         elif (
-            response.data is None
-            or len(response.data) < MIN_FILE_SIZE
-            or len(response.data) > MAX_FILE_SIZE
+            response.content is None
+            or len(response.content) < MIN_FILE_SIZE
+            or len(response.content) > MAX_FILE_SIZE
         ):
             LOGGER.error("incorrect input data for URL %s", url)
         else:
-            return decode_response(response.data)
+            return decode_response(response.content)
     return None
 
 
