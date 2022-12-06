@@ -38,7 +38,10 @@ RETRY_STRATEGY = urllib3.util.Retry(
     connect=0,
     status_forcelist=[429, 500, 502, 503, 504],
 )
-HTTP_POOL = urllib3.PoolManager(retries=RETRY_STRATEGY)
+HTTP_POOL = urllib3.PoolManager(
+        retries=RETRY_STRATEGY,
+        headers={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36'}
+)
 
 HTML_PARSER = HTMLParser(
     collect_ids=False, default_doctype=False, encoding="utf-8", remove_pis=True
